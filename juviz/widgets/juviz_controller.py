@@ -1,4 +1,5 @@
-from aiohttp.web import Application, Request, StreamResponse, HTTPOk, HTTPBadRequest
+from aiohttp.web import Request, StreamResponse, HTTPOk, HTTPBadRequest
+from wslink.protocol import AbstractWebApp
 from paraview import servermanager  # noqa
 
 from trame.widgets import html, vuetify
@@ -54,11 +55,11 @@ def initialize(server):
     ctrl.close_catalyst = close_catalyst
 
     @ctrl.add("on_server_bind")
-    def add_routes(aiohttp_server: Application):
-        # Define Handler for the JuViz Route
-        async def handle(request: Request) -> StreamResponse:
-            global _catalyst_connection
+    def add_routes(aiohttp_server: AbstractWebApp):
+        print("Creating JuViz Endpoint")
 
+        # Define Handler for the JuViz Route
+        async def handle_post(request: Request) -> StreamResponse:
             data: dict = await request.json()
             print(f"Received JuViz Request: {data = }")
             action = data["action"].lower()
@@ -75,7 +76,8 @@ def initialize(server):
             return HTTPOk()
 
         # Create route
-        aiohttp_server.router.add_post("/juviz", handle)
+        # ToDo: Only works for aiohttp backend
+        aiohttp_server.app.router.add_post("/juviz", handle_post)
 
 
 def create_panel(server):
